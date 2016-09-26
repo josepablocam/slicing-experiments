@@ -62,22 +62,55 @@ Building experiments
 We assume you have built WALA as done above.
 
 ```
-cd slicing
-mvn package
+josecambronero$ cd slicing-experiments
+josecambronero slicing-experiments$ mvn package
 ```
 
 You can now run forward slicing on a given class + source.
 
 ```
-java -jar slicing.jar slicing.SimpleSlicer <jar> <caller-sig> <callee-sig>
+java -cp target/slicing-1.0-SNAPSHOT-jar-with-dependencies.jar slicing.SimpleSlicer <jar> <caller> <callee> <analysis>
 ```
 
-For example,
+For example, consider the file Example.java below
 
 ```
-EXAMPLE HERE
+josecambronero slicing-experiments$ cat Example.java 
+class Example {
+  public static String hi(String nm) {
+    return "hi " + nm;
+  }
+  
+  public static String bye(String nm) {
+    return "bye " + nm;
+  }
+  
+  public static void main(String[] args) {
+    String myHi = hi("you");
+    String myBye = bye("you");
+    String complete = myBye + "!";
+  }
+}
 ```
 
+We compile it and place it into a jar
+```
+javac Example.java
+jar cf example.jar Example.class
+```
 
+Make sure you use the appropriate jar, as the one referenced above includes
+all additional necessary dependencies (namely, WALA).
 
+```
+josecambronero slicing-experiments$ java -cp target/slicing-1.0-SNAPSHOT-jar-with-dependencies.jar slicing.SimpleSlicer example.jar "Example.main([Ljava/lang/String;)V" "Example.bye(Ljava/lang/String;)Ljava/lang/String;" 0cfa
+===> Computing slice
+===> Done with slice
+NORMAL_RET_CALLER:Node: < Application, LExample, main([Ljava/lang/String;)V > Context: Everywhere[4]7 = invokestatic < Application, LExample, bye(Ljava/lang/String;)Ljava/lang/String; > 3 @8 exception:6
+NORMAL main:11 = invokevirtual < Application, Ljava/lang/StringBuilder, append(Ljava/lang/String;)Ljava/lang/StringBuilder; > 8,7 @20 exception:10 Node: < Application, LExample, main([Ljava/lang/String;)V > Context: Everywhere
+PARAM_CALLER:Node: < Application, LExample, main([Ljava/lang/String;)V > Context: Everywhere[10]11 = invokevirtual < Application, Ljava/lang/StringBuilder, append(Ljava/lang/String;)Ljava/lang/StringBuilder; > 8,7 @20 exception:10 v7
+EXC_RET_CALLER:Node: < Application, LExample, main([Ljava/lang/String;)V > Context: Everywhere[10]11 = invokevirtual < Application, Ljava/lang/StringBuilder, append(Ljava/lang/String;)Ljava/lang/StringBuilder; > 8,7 @20 exception:10
+HEAP_RET_CALLER:Node: < Application, LExample, main([Ljava/lang/String;)V > Context: Everywhere [[<Primordial,Ljava/lang/String>],< Primordial, Ljava/lang/String, value, <Primordial,[C> >] call:11 = invokevirtual < Application, Ljava/lang/StringBuilder, append(Ljava/lang/String;)Ljava/lang/StringBuilder; > 8,7 @20 exception:10
 
+	0cfa: 9757 ms
+```
