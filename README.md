@@ -114,3 +114,49 @@ HEAP_RET_CALLER:Node: < Application, LExample, main([Ljava/lang/String;)V > Cont
 
 	0cfa: 9757 ms
 ```
+
+Alternatively, you can find all calls to a given method and use the call returns as the criteria for slicing, using
+
+```
+java -cp target/slicing-1.0-SNAPSHOT-jar-with-dependencies.jar slicing.SimpleSlicerUsingCallee example.jar <callee-sig> <analysis>
+```
+
+
+```
+josecambronero slicing-experiments$ cat Example.java 
+class Example {
+  public static String hi(String nm) {
+    return "hi " + nm;
+  }
+  
+  public static String bye(String nm) {
+    return "bye " + nm;
+  }
+  
+  public static String other(String nm) {
+    String dummy = bye("nope");
+    return bye(nm);
+  }
+
+  public static void main(String[] args) {
+    String myHi = hi("you");
+    String myBye = bye("you");
+    String dummy = other("me");
+  }
+}
+josecambronero slicing-experiments$ javac Example.java 
+josecambronero slicing-experiments$ jar cf example.jar Example.class 
+josecambronero slicing-experiments$ java -cp target/slicing-1.0-SNAPSHOT-jar-with-dependencies.jar slicing.SimpleSlicerUsingCallee example.jar "Example.bye(Ljava/lang/String;)Ljava/lang/String;" 0cfa
+Collected 3 return sites to use as criteria for slicing
+===> Computing slice
+===> Done with slice
+===> Computing slice
+===> Done with slice
+===> Computing slice
+===> Done with slice
+Collected 6 statements in slices
+
+	0cfa: 5359 ms
+```
+
+
